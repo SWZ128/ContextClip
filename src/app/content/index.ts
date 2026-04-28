@@ -305,29 +305,25 @@ function activateSelectionMode(): void {
   };
 
   const handleContextMenu = (event: MouseEvent) => {
-    if (drag.phase !== "idle") {
-      event.preventDefault();
-      event.stopPropagation();
-      if (drag.phase === "pending") {
-        clearTimeout(drag.timer);
-      }
-      drag = { phase: "idle" };
-      hideRect();
-      return;
-    }
-
-    if (!pinnedElement && !rectPinned) {
-      return;
-    }
-
     event.preventDefault();
     event.stopPropagation();
-    pinnedElement = null;
-    rectPinned = false;
-    hoveredElement = null;
-    hideOverlay();
-    hideRect();
-    label.textContent = currentResult ? currentResult.title.slice(0, 40) : "Pick block or drag to select";
+    if (drag.phase === "pending") {
+      clearTimeout(drag.timer);
+    }
+    drag = { phase: "idle" };
+
+    if (pinnedElement || rectPinned) {
+      pinnedElement = null;
+      rectPinned = false;
+      hoveredElement = null;
+      currentResult = null;
+      hideOverlay();
+      hideRect();
+      label.textContent = "Pick block or drag to select";
+      return;
+    }
+
+    cleanup();
   };
 
   const handleToolbar = async (event: MouseEvent) => {
@@ -370,15 +366,17 @@ function activateSelectionMode(): void {
       }
       drag = { phase: "idle" };
 
-      if (pinnedElement || rectPinned || currentResult) {
+      if (pinnedElement || rectPinned) {
         pinnedElement = null;
         rectPinned = false;
         hoveredElement = null;
+        currentResult = null;
         hideOverlay();
         hideRect();
-        label.textContent = currentResult ? currentResult.title.slice(0, 40) : "Pick block or drag to select";
+        label.textContent = "Pick block or drag to select";
         return;
       }
+
       cleanup();
     }
   };
