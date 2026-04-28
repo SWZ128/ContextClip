@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "MDContextClaw",
+  "version": "0.1.0",
+  "description": "Extract AI-ready Markdown from the current page.",
+  "permissions": ["downloads", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MDContextClaw"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
