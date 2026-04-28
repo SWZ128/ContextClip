@@ -1,6 +1,6 @@
 import JSZip from "jszip";
-import type { ExtractResult, RuntimeMessage } from "./lib/types";
-import { withFrontmatter } from "./lib/frontmatter";
+import { type ExtractResult, withFrontmatter } from "../../contracts/extract-result";
+import type { RuntimeMessage } from "../../contracts/runtime";
 import "./popup.css";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -17,7 +17,7 @@ app.innerHTML = `
       <div class="hero-copy">
         <p class="eyebrow">AI-ready context</p>
         <h1>MDContextClaw</h1>
-        <p class="subhead">Clean current page or a picked block into export-ready Markdown.</p>
+        <p class="subhead">Clean current page or a picked block into Markdown.</p>
       </div>
     </header>
 
@@ -172,11 +172,11 @@ async function hydrateLastResult(): Promise<void> {
   }
 }
 
-async function runExtractPage(): Promise<void> {
+async function runExtractPage(): Promise<ExtractResult | null> {
   const tab = await getActiveTab();
   if (!tab.id) {
     setStatus("No active tab");
-    return;
+    return null;
   }
 
   try {
@@ -195,7 +195,7 @@ async function runExtractPage(): Promise<void> {
     return lastResult;
   } catch (error) {
     setStatus(toUserMessage(error));
-    return;
+    return null;
   }
 }
 
@@ -217,16 +217,34 @@ async function runPickExtract(): Promise<void> {
 }
 
 async function ensurePageMessaging(tabId: number): Promise<void> {
-  try {
-    await chrome.tabs.sendMessage(tabId, { type: "ping" } satisfies RuntimeMessage);
-    return;
-  } catch {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["content.js"]
-    });
-    await chrome.tabs.sendMessage(tabId, { type: "ping" } satisfies RuntimeMessage);
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: "ping" } satisfies RuntimeMessage);
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => window.setTimeout(resolve, 150));
+    }
   }
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ["content.js"]
+  });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: "ping" } satisfies RuntimeMessage);
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => window.setTimeout(resolve, 150));
+    }
+  }
+
+  throw lastError;
 }
 
 async function downloadMarkdownLocally(result: ExtractResult): Promise<void> {

@@ -8,8 +8,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, "popup.html"),
-        background: resolve(__dirname, "src/background.ts"),
-        content: resolve(__dirname, "src/content.ts")
+        background: resolve(__dirname, "src/app/background/index.ts"),
+        content: resolve(__dirname, "src/app/content/index.ts")
       },
       output: {
         entryFileNames: (chunkInfo) => `${chunkInfo.name}.js`,

@@ -1,0 +1,68 @@
+import type { ExtractResult } from "../contracts/extract-result";
+import { adaptPage } from "./adapters";
+import { buildContext, detectSite, getMetaAuthor, getSourceUrl } from "./adapters/shared";
+import type { DocumentMetadata } from "./domain/types";
+import { buildExtractResult, buildMetadata } from "./export/build-result";
+import { extractPageHtml, extractSelectionHtml } from "./html/extract";
+import { normalizeRoot } from "./html/normalize";
+import { preprocessRoot } from "./html/preprocess";
+
+function describeElement(element: HTMLElement): string {
+  const parts = [element.tagName.toLowerCase()];
+
+  if (element.id) {
+    parts.push(`#${element.id}`);
+  }
+
+  const className = element.className.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  for (const item of className) {
+    parts.push(`.${item}`);
+  }
+
+  return parts.join("");
+}
+
+function normalizeCandidate(root: HTMLElement, meta: DocumentMetadata): ExtractResult {
+  const normalized = normalizeRoot(root, meta);
+  return buildExtractResult("page", normalized, root);
+}
+
+export function extractCurrentPage(): ExtractResult {
+  const rawRoot = extractPageHtml(document);
+  const cleanRoot = preprocessRoot(rawRoot);
+  const adapted = adaptPage(cleanRoot, buildContext(document));
+  return normalizeCandidate(
+    adapted.root,
+    buildMetadata({
+      title: adapted.title,
+      sourceUrl: adapted.sourceUrl,
+      site: adapted.site,
+      author: adapted.author
+    })
+  );
+}
+
+export function extractElement(element: HTMLElement): ExtractResult {
+  const rawRoot = extractSelectionHtml(element);
+  const cleanRoot = preprocessRoot(rawRoot);
+  const title =
+    cleanRoot.querySelector("h1,h2,h3")?.textContent?.trim() ||
+    element.getAttribute("aria-label") ||
+    document.title ||
+    "Selected Content";
+  const selectionHint = describeElement(element);
+  const normalized = normalizeRoot(
+    cleanRoot,
+    buildMetadata(
+      {
+        title,
+        sourceUrl: getSourceUrl(document),
+        site: detectSite(document),
+        author: getMetaAuthor(document)
+      },
+      selectionHint
+    )
+  );
+
+  return buildExtractResult("selection", normalized, cleanRoot, selectionHint);
+}

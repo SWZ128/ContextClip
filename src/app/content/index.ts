@@ -1,6 +1,31 @@
-import { extractCurrentPage, extractElement } from "./content-extract";
-import { withFrontmatterLocal } from "./content-markdown";
-import type { ExtractResult, RuntimeMessage } from "./lib/types";
+import { extractCurrentPage, extractElement } from "../../extractor";
+import type { ExtractResult } from "../../contracts/extract-result";
+import type { RuntimeMessage } from "../../contracts/runtime";
+
+function escapeYamlValue(value: string): string {
+  if (value.includes("\n")) {
+    const lines = value.split("\n").map((l) => escapeYamlValue(l));
+    return lines.join("\n  ");
+  }
+  const single = value.replace(/\\/g, "\\\\").replace(/'/g, "''");
+  return `'${single}'`;
+}
+
+function withFrontmatter(result: ExtractResult): string {
+  const lines = [
+    "---",
+    `title: ${escapeYamlValue(result.title)}`,
+    `source_url: ${escapeYamlValue(result.sourceUrl)}`,
+    `site: ${escapeYamlValue(result.site)}`,
+    `author: ${escapeYamlValue(result.author ?? "")}`,
+    `captured_at: ${escapeYamlValue(result.capturedAt)}`,
+    `mode: ${escapeYamlValue(result.mode)}`,
+    `selection_hint: ${escapeYamlValue(result.selectionHint ?? "")}`,
+    "---"
+  ];
+
+  return `${lines.join("\n")}\n\n${result.markdown}\n`;
+}
 
 const OVERLAY_ID = "md-context-claw-overlay";
 const TOOLBAR_ID = "md-context-claw-toolbar";
@@ -8,26 +33,30 @@ const IGNORE_CLICK_ATTR = "data-md-context-claw-ignore";
 
 let hoveredElement: HTMLElement | null = null;
 let cleanupSelectionMode: (() => void) | null = null;
+let messageListenerInstalled = false;
 
-chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
-  if (message.type === "ping") {
-    sendResponse({ ok: true });
+if (!messageListenerInstalled) {
+  messageListenerInstalled = true;
+  chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
+    if (message.type === "ping") {
+      sendResponse({ ok: true });
+      return false;
+    }
+
+    if (message.type === "extract-page") {
+      sendResponse({ result: extractCurrentPage() });
+      return false;
+    }
+
+    if (message.type === "start-selection") {
+      activateSelectionMode();
+      sendResponse({ ok: true });
+      return false;
+    }
+
     return false;
-  }
-
-  if (message.type === "extract-page") {
-    sendResponse({ result: extractCurrentPage() });
-    return false;
-  }
-
-  if (message.type === "start-selection") {
-    activateSelectionMode();
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  return false;
-});
+  });
+}
 
 function activateSelectionMode(): void {
   cleanupSelectionMode?.();
@@ -179,7 +208,7 @@ function activateSelectionMode(): void {
     }
 
     if (action === "copy") {
-      await copyText(withFrontmatterLocal(currentResult));
+      await copyText(withFrontmatter(currentResult));
       label.textContent = "Copied";
       return;
     }
@@ -342,7 +371,7 @@ async function copyText(text: string): Promise<void> {
 }
 
 function downloadSelectionMarkdown(result: ExtractResult): void {
-  const markdown = withFrontmatterLocal(result);
+  const markdown = withFrontmatter(result);
   const url = `data:text/markdown;charset=utf-8,${encodeURIComponent(markdown)}`;
   const anchor = document.createElement("a");
   anchor.setAttribute(IGNORE_CLICK_ATTR, "true");

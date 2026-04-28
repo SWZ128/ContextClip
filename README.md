@@ -111,13 +111,13 @@ After publish, install section will add:
 ## Project Structure
 
 ```text
-public/manifest.json   Chrome extension manifest
-src/popup.ts           Popup UI
-src/popup.css          Popup styles
-src/content.ts         In-page selection and extraction entry
-src/background.ts      Runtime result store
-src/content-extract.ts Page extraction pipeline
-src/content-markdown.ts Markdown conversion for content script
+public/manifest.json         Chrome extension manifest
+src/app/popup/index.ts       Popup UI
+src/app/popup/popup.css      Popup styles
+src/app/content/index.ts     In-page selection entry
+src/app/background/index.ts  Runtime result store
+src/extractor/               Extraction engine
+src/contracts/               Shared runtime contracts
 ```
 
 ## Development
