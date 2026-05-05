@@ -13,6 +13,8 @@ export type ExtractResult = {
   site: string;
   sourceUrl: string;
   author?: string;
+  createdAt?: string;
+  modifiedAt?: string;
   capturedAt: string;
   selectionHint?: string;
   markdown: string;
@@ -37,6 +39,8 @@ export function withFrontmatter(result: ExtractResult): string {
     `source_url: ${escapeYamlValue(result.sourceUrl)}`,
     `site: ${escapeYamlValue(result.site)}`,
     `author: ${escapeYamlValue(result.author ?? "")}`,
+    ...(result.createdAt ? [`created_at: ${escapeYamlValue(result.createdAt)}`] : []),
+    ...(result.modifiedAt ? [`modified_at: ${escapeYamlValue(result.modifiedAt)}`] : []),
     `captured_at: ${escapeYamlValue(result.capturedAt)}`,
     `mode: ${escapeYamlValue(result.mode)}`,
     `selection_hint: ${escapeYamlValue(result.selectionHint ?? "")}`,

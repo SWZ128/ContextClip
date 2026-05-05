@@ -3,6 +3,8 @@ export type DocumentMetadata = {
   sourceUrl: string;
   site: string;
   author?: string;
+  createdAt?: string;
+  modifiedAt?: string;
   capturedAt: string;
   selectionHint?: string;
 };

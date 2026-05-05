@@ -3,6 +3,8 @@ export type ExtractionContext = {
   sourceUrl: string;
   site: string;
   author?: string;
+  createdAt?: string;
+  modifiedAt?: string;
 };
 
 export type AdaptedContent = {
@@ -11,6 +13,8 @@ export type AdaptedContent = {
   sourceUrl: string;
   site: string;
   author?: string;
+  createdAt?: string;
+  modifiedAt?: string;
 };
 
 export type DomainAdapter = {

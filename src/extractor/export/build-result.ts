@@ -85,6 +85,8 @@ export function buildExtractResult(
     site: normalizedDocument.meta.site,
     sourceUrl: normalizedDocument.meta.sourceUrl,
     author: normalizedDocument.meta.author,
+    createdAt: normalizedDocument.meta.createdAt,
+    modifiedAt: normalizedDocument.meta.modifiedAt,
     capturedAt: normalizedDocument.meta.capturedAt,
     selectionHint: selectionHint ?? normalizedDocument.meta.selectionHint,
     markdown,

@@ -18,6 +18,8 @@ function withFrontmatter(result: ExtractResult): string {
     `source_url: ${escapeYamlValue(result.sourceUrl)}`,
     `site: ${escapeYamlValue(result.site)}`,
     `author: ${escapeYamlValue(result.author ?? "")}`,
+    ...(result.createdAt ? [`created_at: ${escapeYamlValue(result.createdAt)}`] : []),
+    ...(result.modifiedAt ? [`modified_at: ${escapeYamlValue(result.modifiedAt)}`] : []),
     `captured_at: ${escapeYamlValue(result.capturedAt)}`,
     `mode: ${escapeYamlValue(result.mode)}`,
     `selection_hint: ${escapeYamlValue(result.selectionHint ?? "")}`,
@@ -216,6 +218,16 @@ function activateSelectionMode(): void {
   let pinnedElement: HTMLElement | null = null;
   let rectPinned = false;
   let drag: DragState = { phase: "idle" };
+  let dismissTimer: number | null = null;
+
+  function scheduleDismiss(delay = 2_000): void {
+    if (dismissTimer !== null) {
+      window.clearTimeout(dismissTimer);
+    }
+    dismissTimer = window.setTimeout(() => {
+      cleanup();
+    }, delay);
+  }
 
   function hideOverlay(): void {
     overlay.style.width = "0";
@@ -407,6 +419,7 @@ function activateSelectionMode(): void {
     if (action === "copy") {
       await copyText(withFrontmatter(currentResult));
       label.textContent = "Copied";
+      scheduleDismiss();
       return;
     }
 
@@ -414,6 +427,7 @@ function activateSelectionMode(): void {
       try {
         downloadSelectionMarkdown(currentResult);
         label.textContent = "Download started";
+        scheduleDismiss();
       } catch {
         label.textContent = "Download failed";
       }
@@ -451,6 +465,10 @@ function activateSelectionMode(): void {
   document.addEventListener("keydown", handleEscape, true);
 
   function cleanup(): void {
+    if (dismissTimer !== null) {
+      window.clearTimeout(dismissTimer);
+      dismissTimer = null;
+    }
     document.removeEventListener("mousedown", handleMouseDown, true);
     document.removeEventListener("mousemove", handleMouseMove, true);
     document.removeEventListener("mouseup", handleMouseUp, true);

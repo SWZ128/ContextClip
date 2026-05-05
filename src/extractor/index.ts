@@ -1,6 +1,6 @@
 import type { ExtractResult } from "../contracts/extract-result";
 import { adaptPage } from "./adapters";
-import { buildContext, detectSite, getMetaAuthor, getSourceUrl } from "./adapters/shared";
+import { buildContext, detectSite, getCreatedAt, getDocumentTitle, getMetaAuthor, getModifiedAt, getSourceUrl } from "./adapters/shared";
 import type { DocumentMetadata } from "./domain/types";
 import { buildExtractResult, buildMetadata } from "./export/build-result";
 import { extractPageHtml, extractSelectionHtml } from "./html/extract";
@@ -45,8 +45,10 @@ export function extractCurrentPage(): ExtractResult {
 export function extractElement(element: HTMLElement): ExtractResult {
   const rawRoot = extractSelectionHtml(element);
   const cleanRoot = preprocessRoot(rawRoot);
+  const pageTitle = getDocumentTitle(document);
   const title =
     cleanRoot.querySelector("h1,h2,h3")?.textContent?.trim() ||
+    pageTitle ||
     element.getAttribute("aria-label") ||
     document.title ||
     "Selected Content";
@@ -58,7 +60,9 @@ export function extractElement(element: HTMLElement): ExtractResult {
         title,
         sourceUrl: getSourceUrl(document),
         site: detectSite(document),
-        author: getMetaAuthor(document)
+        author: getMetaAuthor(document),
+        createdAt: getCreatedAt(document),
+        modifiedAt: getModifiedAt(document)
       },
       selectionHint
     )
