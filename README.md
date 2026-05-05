@@ -1,36 +1,36 @@
 # ContextClip
 
-Chrome extension. Clip precise content from web pages into AI-ready Markdown.
+Chrome extension. Clip precise web context into AI-ready Markdown.
 
-Not a web saver (but can be). A precision tool for feeding local LLMs.
+Not a generic web-to-Markdown converter(but can be).
+ContextClip is a precision tool for feeding local LLMs.
 
-## Why
+Text-only LLMs need clean context, not whole pages.
+You want three paragraphs from a GitHub README, one section from a paper, or a selected block from a private page, without nav, ads, comments, or layout junk.
 
-Text-only LLMs need clean context. Web pages are noisy. You want three paragraphs from a GitHub README, not the sidebar, not the nav, not the comments.
-
-ContextClip runs entirely in your browser — no server, no API key, no data leaving your machine. It works on login-required pages that server-side fetchers can't reach.
+Everything runs entirely in your browser.
+No server. No API key. No page data leaving your machine.
+Works on login-required pages that server-side fetchers can't reach.
 
 ## What It Does
 
 ### Extract This Page
 
-One click. Pulls main content, strips noise, adds YAML frontmatter with source metadata.
+One click. Pull the main content, clean the noise, attach source metadata.
 
 ### Pick & Extract
 
-Two ways to select:
+Need only one section, code block, or table:
 
-- **Hover + click** — pick a semantic block (article, section, code, table)
-- **Drag a rectangle** — long-press and drag to draw a selection area. Uses Range API so you get the exact text inside the rectangle, even if it's half a paragraph
+- **Hover + click** — pick one semantic block
+- **Drag a rectangle** — capture an exact visual area
 
-Both produce the same clean Markdown output.
+### Output
 
-### Smart output
-
-- Text pages → single `.md` file
+- Text-first pages → `.md`
 - Media-heavy pages → `.zip` with `page.md` + `manifest.json`
 
-All output includes YAML frontmatter: title, source URL, site, author, captured time, extraction mode.
+Every result includes YAML frontmatter: title, source URL, site, author, captured time, and extraction mode.
 
 ## Site Support
 
@@ -41,11 +41,15 @@ General extraction works on any page via Readability. Deeper cleanup for:
 - **微信公众号** — article body, author, title
 - **知乎** — column posts, answers
 
-Quality over coverage. Better to extract three sites well than thirty sites poorly.
+Quality over coverage. Better to trust a few adapters than ship thirty weak ones.
 
 ## Install
 
-### Install From Source
+### Chrome Web Store
+
+Coming soon.
+
+### Load From Source
 
 ```bash
 pnpm install
@@ -63,15 +67,16 @@ pnpm build
 
 1. Click extension icon
 2. Click **Extract This Page**
-3. Preview appears in popup
-4. **Copy as MD** / **Download MD** / **Download ZIP**
+3. Preview the generated Markdown
+4. Markdown is copied immediately
+5. Use **Download File** if you want to save it locally
 
 ### Select part of a page
 
 1. Click extension icon
 2. Click **Pick & Extract**
 3. **Hover + click** to pick a block, or **long-press + drag** to draw a rectangle
-4. Use floating toolbar to **Copy** or **Download**
+4. Use the floating toolbar to **Copy** or **Download**
 5. **Right-click** to deselect and pick again, **Esc** again to quit
 
 ### Controls in selection mode
@@ -112,6 +117,14 @@ page-export/
   page.md
   manifest.json
 ```
+
+## Why It Exists
+
+LLMs are good at reasoning over clean text.
+
+Web pages are not clean text.
+
+ContextClip sits between them.
 
 ## Development
 
