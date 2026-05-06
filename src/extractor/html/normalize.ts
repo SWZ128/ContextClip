@@ -13,7 +13,18 @@ function mergeInlineText(nodes: InlineNode[]): InlineNode[] {
       last.value += node.value;
       continue;
     }
+    if (node.type === "lineBreak" && last?.type === "lineBreak") {
+      continue;
+    }
     merged.push(node);
+  }
+
+  while (merged[0]?.type === "lineBreak") {
+    merged.shift();
+  }
+
+  while (merged[merged.length - 1]?.type === "lineBreak") {
+    merged.pop();
   }
 
   const first = merged[0];

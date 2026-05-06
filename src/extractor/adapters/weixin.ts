@@ -56,8 +56,25 @@ function cleanupWeixinTail(root: HTMLElement): void {
   }
 }
 
+function removeLeadingMediaOnlyBlocks(root: HTMLElement): void {
+  let current = root.firstElementChild as HTMLElement | null;
+
+  while (current) {
+    const next = current.nextElementSibling as HTMLElement | null;
+    const text = normalizeText(current.textContent ?? "");
+    const hasMedia = Boolean(current.querySelector("img, video, audio")) || current.matches("img, video, audio");
+
+    if (text || !hasMedia) {
+      return;
+    }
+
+    current.remove();
+    current = next;
+  }
+}
+
 function buildWeixinRoot(root: HTMLElement): HTMLElement | null {
-  const content = root.querySelector<HTMLElement>("#js_content, #img-content");
+  const content = root.querySelector<HTMLElement>("#js_content") || root.querySelector<HTMLElement>("#img-content");
   if (!content) {
     return null;
   }
@@ -72,6 +89,10 @@ function buildWeixinRoot(root: HTMLElement): HTMLElement | null {
   }
 
   const body = content.cloneNode(true) as HTMLElement;
+  body.querySelectorAll("#activity-name, .rich_media_title, #meta_content, .rich_media_meta_list").forEach((element) => {
+    element.remove();
+  });
+  removeLeadingMediaOnlyBlocks(body);
   cleanupWeixinTail(body);
   article.appendChild(body);
   return article;

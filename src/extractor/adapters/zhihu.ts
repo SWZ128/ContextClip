@@ -105,20 +105,10 @@ function buildZhihuRoot(root: HTMLElement): HTMLElement | null {
   const title =
     root.querySelector<HTMLElement>("h1.Post-Title") ||
     root.querySelector<HTMLElement>("h1");
-  const author =
-    root.querySelector<HTMLElement>(".AuthorInfo-name") ||
-    root.querySelector<HTMLElement>("[class*='AuthorInfo']");
-
   if (title?.textContent?.trim()) {
     const heading = document.createElement("h1");
     heading.textContent = title.textContent.trim();
     article.appendChild(heading);
-  }
-
-  if (author?.textContent?.trim()) {
-    const byline = document.createElement("p");
-    byline.textContent = author.textContent.trim();
-    article.appendChild(byline);
   }
 
   const body = content.cloneNode(true) as HTMLElement;

@@ -1,5 +1,5 @@
 import { preprocessRoot } from "../html/preprocess";
-import { getText, makeAdaptedContent } from "./shared";
+import { getText, makeAdaptedContent, normalizeDateValue } from "./shared";
 import type { AdaptedContent, DomainAdapter, ExtractionContext } from "./types";
 
 type ArxivIds = {
@@ -125,6 +125,41 @@ function sanitizeArxivHtmlRoot(root: HTMLElement): void {
     }
     current = next;
   }
+
+  root.querySelectorAll(".ltx_note").forEach((element) => {
+    const note = element as HTMLElement;
+    const content = note.querySelector(".ltx_note_content");
+    const paragraph = note.closest("p, .ltx_p") as HTMLElement | null;
+    if (!content || !paragraph) {
+      return;
+    }
+
+    const links = Array.from(content.querySelectorAll<HTMLAnchorElement>("a[href]"));
+    const text = normalizeWhitespace(content.textContent ?? "").replace(/^\d+\s*/, "");
+    const insertions: HTMLElement[] = [];
+
+    if (/Code:/i.test(text) && links[0]) {
+      const block = document.createElement("p");
+      block.append("Code: ");
+      block.appendChild(links[0].cloneNode(true));
+      insertions.push(block);
+    }
+
+    if (/Dataset:/i.test(text) && links[1]) {
+      const block = document.createElement("p");
+      block.append("Dataset: ");
+      block.appendChild(links[1].cloneNode(true));
+      insertions.push(block);
+    }
+
+    if (insertions.length > 0) {
+      note.remove();
+      paragraph.after(...insertions);
+      return;
+    }
+
+    note.querySelectorAll(".ltx_note_mark, .ltx_tag_note").forEach((child) => child.remove());
+  });
 }
 
 function extractArxivDomMetadata(root: HTMLElement, context: ExtractionContext, ids: ArxivIds): ArxivMetadata {
@@ -185,8 +220,8 @@ function parseArxivApiMetadata(xml: string): ArxivMetadata | null {
   return {
     title: title || undefined,
     author: authors.length > 0 ? authors.join(", ") : undefined,
-    createdAt: published || undefined,
-    modifiedAt: updated || undefined,
+    createdAt: normalizeDateValue(published),
+    modifiedAt: normalizeDateValue(updated),
     sourceUrl: alternateLink?.getAttribute("href") || undefined
   };
 }

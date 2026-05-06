@@ -178,6 +178,14 @@ export function getMetaAuthor(document: Document): string | undefined {
     return citationAuthors.join(", ");
   }
 
+  if (detectSite(document) === "weixin") {
+    return (
+      getText(document.querySelector("#js_name")) ||
+      getText(document.querySelector(".rich_media_meta_nickname")) ||
+      cleanText(document.documentElement.innerHTML.match(/var nickname = htmlDecode\("([^"]+)"\)/)?.[1])
+    );
+  }
+
   if (detectSite(document) === "arxiv") {
     const authors =
       getText(document.querySelector(".authors")) ||
