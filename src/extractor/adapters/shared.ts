@@ -6,6 +6,61 @@ function stripDescriptor(value: string, label: string): string {
   return value.replace(new RegExp(`^${label}\\s*:?\\s*`, "i"), "").trim();
 }
 
+function getSavedFromUrl(document: Document): string | undefined {
+  for (const node of Array.from(document.childNodes)) {
+    if (node.nodeType !== Node.COMMENT_NODE) {
+      continue;
+    }
+
+    const value = node.textContent ?? "";
+    const match = value.match(/saved from url=\(\d+\)(https?:\/\/\S+)/i);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return undefined;
+}
+
+function isBrokenSourceUrl(value: string): boolean {
+  return /\/undefined(?:\/|$)/.test(value);
+}
+
+function shouldPreferSavedUrl(candidate: string | undefined, savedUrl: string | undefined): boolean {
+  if (!savedUrl) {
+    return false;
+  }
+
+  if (!candidate) {
+    return true;
+  }
+
+  if (isBrokenSourceUrl(candidate)) {
+    return true;
+  }
+
+  try {
+    const current = new URL(candidate);
+    const saved = new URL(savedUrl);
+
+    if (current.hostname !== saved.hostname) {
+      return false;
+    }
+
+    if (current.pathname === "/" || current.pathname === "") {
+      return true;
+    }
+
+    if (saved.pathname.length > current.pathname.length && current.pathname.split("/").filter(Boolean).length <= 2) {
+      return true;
+    }
+  } catch {
+    return true;
+  }
+
+  return false;
+}
+
 export function cleanText(value: string | null | undefined): string | undefined {
   if (!value) {
     return undefined;
@@ -111,11 +166,12 @@ export function detectSite(document: Document): string {
 }
 
 export function getSourceUrl(document: Document): string {
-  return (
+  const candidate =
     document.querySelector<HTMLMetaElement>("meta[property='og:url']")?.content ||
     document.querySelector<HTMLLinkElement>("link[rel='canonical']")?.href ||
-    document.location.href
-  );
+    document.location.href;
+  const savedUrl = getSavedFromUrl(document);
+  return shouldPreferSavedUrl(candidate, savedUrl) ? (savedUrl as string) : candidate;
 }
 
 export function getDocumentTitle(document: Document): string {
@@ -161,7 +217,8 @@ export function getDocumentTitle(document: Document): string {
       getText(document.querySelector("[data-testid='readme'] .markdown-body h1")) ||
       getText(document.querySelector("main .markdown-body h1")) ||
       getText(document.querySelector("article.markdown-body h1")) ||
-      getText(document.querySelector(".entry-content.markdown-body h1"));
+      getText(document.querySelector(".entry-content.markdown-body h1")) ||
+      getText(document.querySelector("nav[aria-label='Breadcrumbs'] li:last-child span"));
     if (title) {
       return title;
     }

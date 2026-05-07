@@ -26,6 +26,40 @@ function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeMathSource(value: string): string {
+  return value
+    .replace(/\r\n?/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatInlineMath(value: string, display = false): string {
+  const normalized = normalizeMathSource(value);
+  if (!normalized) {
+    return "";
+  }
+  return display ? `$$${normalized}$$` : `$${normalized}$`;
+}
+
+function replaceArxivMath(root: HTMLElement): void {
+  root.querySelectorAll("math").forEach((element) => {
+    const math = element as Element;
+    const annotation = math.querySelector("annotation[encoding='application/x-tex']")?.textContent ?? "";
+    const altText = math.getAttribute("alttext") ?? "";
+    const text = math.textContent ?? "";
+    const source = annotation || altText || text;
+    const formatted = formatInlineMath(source, math.getAttribute("display") === "block");
+    if (!formatted) {
+      math.remove();
+      return;
+    }
+
+    const replacement = document.createElement("span");
+    replacement.textContent = formatted;
+    math.replaceWith(replacement);
+  });
+}
+
 function stripLabel(value: string, label: string): string {
   return value.replace(new RegExp(`^${label}\\s*:?\\s*`, "i"), "").trim();
 }
@@ -97,6 +131,8 @@ function buildArxivHtmlRoot(source: ParentNode, baseUrl: string): HTMLElement | 
 }
 
 function sanitizeArxivHtmlRoot(root: HTMLElement): void {
+  replaceArxivMath(root);
+
   root.querySelectorAll(".ltx_tag_bibliography, #license-tr, #watermark-tr, .ltx_authors").forEach((element) => {
     element.remove();
   });
@@ -112,8 +148,21 @@ function sanitizeArxivHtmlRoot(root: HTMLElement): void {
     element.replaceWith(heading);
   });
 
-  root.querySelectorAll(".ltx_title .ltx_tag").forEach((element) => {
+  root.querySelectorAll(".ltx_title_document .ltx_tag, .ltx_title_abstract .ltx_tag").forEach((element) => {
     element.remove();
+  });
+
+  root.querySelectorAll(".ltx_tag_item").forEach((element) => {
+    element.remove();
+  });
+
+  root.querySelectorAll(".ltx_title .ltx_tag").forEach((element) => {
+    const next = element.nextSibling;
+    if (next?.nodeType === Node.TEXT_NODE) {
+      next.textContent = ` ${next.textContent?.replace(/^\s+/, "") ?? ""}`;
+      return;
+    }
+    element.after(document.createTextNode(" "));
   });
 
   const firstSection = root.querySelector(".ltx_section, .ltx_appendix");

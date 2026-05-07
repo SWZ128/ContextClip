@@ -64,6 +64,70 @@ function truncateFrom(root: HTMLElement, start: Node | null): void {
   }
 }
 
+function unwrapElement(element: HTMLElement): void {
+  const parent = element.parentNode;
+  if (!parent) {
+    return;
+  }
+
+  while (element.firstChild) {
+    parent.insertBefore(element.firstChild, element);
+  }
+  element.remove();
+}
+
+function decodeZhihuRedirect(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "link.zhihu.com") {
+      return decodeURIComponent(parsed.searchParams.get("target") || url);
+    }
+  } catch {
+    return url;
+  }
+
+  return url;
+}
+
+function cleanupZhihuContent(root: HTMLElement): void {
+  root.querySelectorAll("a[href*='zhida.zhihu.com/search']").forEach((element) => {
+    unwrapElement(element as HTMLElement);
+  });
+
+  root.querySelectorAll("a[href]").forEach((element) => {
+    const anchor = element as HTMLAnchorElement;
+    const href = anchor.getAttribute("href") || "";
+    anchor.setAttribute("href", decodeZhihuRedirect(href));
+  });
+
+  root.querySelectorAll(".RichText-LinkCardContainer").forEach((element) => {
+    const container = element as HTMLElement;
+    const anchor = container.querySelector<HTMLAnchorElement>("a[href]");
+    const target = anchor?.getAttribute("data-text")?.trim() || decodeZhihuRedirect(anchor?.href || "");
+    if (!target) {
+      container.remove();
+      return;
+    }
+
+    const previous = container.previousElementSibling;
+    if (previous instanceof HTMLElement && previous.tagName === "P" && /[:：]\s*$/.test(previous.textContent ?? "")) {
+      previous.textContent = `${previous.textContent ?? ""}${target}`;
+      container.remove();
+      return;
+    }
+
+    const paragraph = document.createElement("p");
+    paragraph.textContent = target;
+    container.replaceWith(paragraph);
+  });
+
+  root.querySelectorAll("svg").forEach((element) => {
+    if (element.closest("a")) {
+      element.remove();
+    }
+  });
+}
+
 function cleanupZhihuTail(root: HTMLElement): void {
   const candidates: HTMLElement[] = [];
 
@@ -112,6 +176,7 @@ function buildZhihuRoot(root: HTMLElement): HTMLElement | null {
   }
 
   const body = content.cloneNode(true) as HTMLElement;
+  cleanupZhihuContent(body);
   cleanupZhihuTail(body);
   article.appendChild(body);
   return article;

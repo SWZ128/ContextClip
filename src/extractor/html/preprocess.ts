@@ -50,33 +50,77 @@ function absolutize(raw: string, baseUrl: string): string {
   }
 }
 
+function decodeHexUrl(value: string): string | undefined {
+  if (!/^[0-9a-f]+$/i.test(value) || value.length % 2 !== 0) {
+    return undefined;
+  }
+
+  try {
+    let output = "";
+    for (let index = 0; index < value.length; index += 2) {
+      output += String.fromCharCode(Number.parseInt(value.slice(index, index + 2), 16));
+    }
+    return /^https?:\/\//i.test(output) ? output : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeGithubCamoUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.hostname !== "camo.githubusercontent.com") {
+      return value;
+    }
+
+    const encoded = url.pathname.split("/").filter(Boolean).at(-1) || "";
+    return decodeHexUrl(encoded) || value;
+  } catch {
+    return value;
+  }
+}
+
 function isPlaceholderDataImage(value: string): boolean {
   return /^data:image\/svg\+xml/i.test(value);
 }
 
-function resolveLazySrc(element: HTMLImageElement): string {
+function isAbsoluteWebUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+function resolveImageSrc(element: HTMLImageElement): string {
+  const canonical = element.getAttribute("data-canonical-src") || "";
+  if (canonical && !isPlaceholderDataImage(canonical)) {
+    return canonical;
+  }
+
+  const dataSrc = element.getAttribute("data-src") || "";
+  if (dataSrc && !isPlaceholderDataImage(dataSrc)) {
+    return dataSrc;
+  }
+
+  const src = element.getAttribute("src") || "";
+  if (src && isAbsoluteWebUrl(src) && !isPlaceholderDataImage(src)) {
+    return src;
+  }
+
   const lazy =
-    element.getAttribute("data-src") ||
-    element.getAttribute("data-original") ||
     element.getAttribute("data-actualsrc") ||
+    element.getAttribute("data-original") ||
     "";
-  return (
-    lazy ||
-    element.getAttribute("src") ||
-    ""
-  );
+  return lazy || src;
 }
 
 function normalizeMedia(root: HTMLElement, baseUrl: string): void {
   root.querySelectorAll("img").forEach((node) => {
     const element = node as HTMLImageElement;
-    const src = resolveLazySrc(element);
+    const src = resolveImageSrc(element);
     if (!src || isPlaceholderDataImage(src)) {
       element.remove();
       return;
     }
 
-    element.setAttribute("src", absolutize(src, baseUrl));
+    element.setAttribute("src", normalizeGithubCamoUrl(absolutize(src, baseUrl)));
   });
 
   root.querySelectorAll("audio, video, source").forEach((node) => {
@@ -92,7 +136,7 @@ function normalizeLinks(root: HTMLElement, baseUrl: string): void {
   root.querySelectorAll("a[href]").forEach((node) => {
     const href = node.getAttribute("href");
     if (href) {
-      node.setAttribute("href", absolutize(href, baseUrl));
+      node.setAttribute("href", normalizeGithubCamoUrl(absolutize(href, baseUrl)));
     }
   });
 }
