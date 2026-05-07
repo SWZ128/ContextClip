@@ -496,42 +496,6 @@ function activateSelectionMode(): void {
 }
 
 function extractFromRect(left: number, top: number, right: number, bottom: number): ExtractResult | null {
-  const startRange = document.caretRangeFromPoint(left, top);
-  const endRange = document.caretRangeFromPoint(right, bottom);
-
-  if (!startRange || !endRange) {
-    return extractFromRectFallback(left, top, right, bottom);
-  }
-
-  const range = document.createRange();
-  try {
-    range.setStart(startRange.startContainer, startRange.startOffset);
-    range.setEnd(endRange.startContainer, endRange.startOffset);
-  } catch {
-    try {
-      range.setStart(endRange.startContainer, endRange.startOffset);
-      range.setEnd(startRange.startContainer, startRange.startOffset);
-    } catch {
-      return extractFromRectFallback(left, top, right, bottom);
-    }
-  }
-
-  if (range.collapsed) {
-    return extractFromRectFallback(left, top, right, bottom);
-  }
-
-  const fragment = range.cloneContents();
-  if (!fragment.hasChildNodes()) {
-    return extractFromRectFallback(left, top, right, bottom);
-  }
-
-  const container = document.createElement("div");
-  container.appendChild(fragment);
-
-  return extractElement(container);
-}
-
-function extractFromRectFallback(left: number, top: number, right: number, bottom: number): ExtractResult | null {
   const rect = new DOMRect(left, top, right - left, bottom - top);
   const elements = findElementsInRect(rect);
   if (elements.length === 0) {
