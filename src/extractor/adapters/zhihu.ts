@@ -182,6 +182,15 @@ function buildZhihuRoot(root: HTMLElement): HTMLElement | null {
   return article;
 }
 
+function buildZhihuSelectionRoot(root: HTMLElement): HTMLElement {
+  const article = document.createElement("article");
+  const body = root.cloneNode(true) as HTMLElement;
+  cleanupZhihuContent(body);
+  cleanupZhihuTail(body);
+  article.appendChild(body);
+  return article;
+}
+
 export const zhihuAdapter: DomainAdapter = {
   name: "zhihu",
   match(root, context) {
@@ -200,6 +209,11 @@ export const zhihuAdapter: DomainAdapter = {
         getText(root.querySelector(".AuthorInfo-name")) ||
         getText(root.querySelector("[class*='AuthorInfo']")) ||
         context.author
+    });
+  },
+  transformSelection(root, context) {
+    return makeAdaptedContent(buildZhihuSelectionRoot(root), context, {
+      site: "zhihu"
     });
   }
 };

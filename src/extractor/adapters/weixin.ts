@@ -42,6 +42,17 @@ function buildWeixinRoot(root: HTMLElement): HTMLElement | null {
   return article;
 }
 
+function buildWeixinSelectionRoot(root: HTMLElement): HTMLElement {
+  const article = document.createElement("article");
+  const body = root.cloneNode(true) as HTMLElement;
+  body.querySelectorAll("#activity-name, .rich_media_title, #meta_content, .rich_media_meta_list").forEach((element) => {
+    element.remove();
+  });
+  removeLeadingMediaOnlyBlocks(body);
+  article.appendChild(body);
+  return article;
+}
+
 export const weixinAdapter: DomainAdapter = {
   name: "weixin",
   match(root, context) {
@@ -56,6 +67,11 @@ export const weixinAdapter: DomainAdapter = {
     return makeAdaptedContent(adaptedRoot, context, {
       site: "weixin",
       title: getText(adaptedRoot.querySelector("h1")) || context.documentTitle
+    });
+  },
+  transformSelection(root, context) {
+    return makeAdaptedContent(buildWeixinSelectionRoot(root), context, {
+      site: "weixin"
     });
   }
 };

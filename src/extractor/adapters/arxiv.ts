@@ -130,7 +130,7 @@ function buildArxivHtmlRoot(source: ParentNode, baseUrl: string): HTMLElement | 
   return adapted;
 }
 
-function sanitizeArxivHtmlRoot(root: HTMLElement): void {
+function sanitizeArxivHtmlRoot(root: HTMLElement, options?: { selection?: boolean }): void {
   replaceArxivMath(root);
 
   root.querySelectorAll(".ltx_tag_bibliography, #license-tr, #watermark-tr, .ltx_authors").forEach((element) => {
@@ -165,14 +165,16 @@ function sanitizeArxivHtmlRoot(root: HTMLElement): void {
     element.after(document.createTextNode(" "));
   });
 
-  const firstSection = root.querySelector(".ltx_section, .ltx_appendix");
-  let current = root.querySelector(".ltx_abstract")?.nextElementSibling ?? root.querySelector(".ltx_title_document")?.nextElementSibling ?? null;
-  while (current && current !== firstSection) {
-    const next = current.nextElementSibling;
-    if (current.matches(".ltx_para, .ltx_block")) {
-      current.remove();
+  if (!options?.selection) {
+    const firstSection = root.querySelector(".ltx_section, .ltx_appendix");
+    let current = root.querySelector(".ltx_abstract")?.nextElementSibling ?? root.querySelector(".ltx_title_document")?.nextElementSibling ?? null;
+    while (current && current !== firstSection) {
+      const next = current.nextElementSibling;
+      if (current.matches(".ltx_para, .ltx_block")) {
+        current.remove();
+      }
+      current = next;
     }
-    current = next;
   }
 
   root.querySelectorAll(".ltx_note").forEach((element) => {
@@ -209,6 +211,14 @@ function sanitizeArxivHtmlRoot(root: HTMLElement): void {
 
     note.querySelectorAll(".ltx_note_mark, .ltx_tag_note").forEach((child) => child.remove());
   });
+}
+
+function buildArxivSelectionRoot(root: HTMLElement): HTMLElement {
+  const article = document.createElement("article");
+  const clone = root.cloneNode(true) as HTMLElement;
+  sanitizeArxivHtmlRoot(clone, { selection: true });
+  article.appendChild(clone);
+  return article;
 }
 
 function extractArxivDomMetadata(root: HTMLElement, context: ExtractionContext, ids: ArxivIds): ArxivMetadata {
@@ -402,5 +412,10 @@ export const arxivAdapter: DomainAdapter = {
     }
 
     return buildArxivContent(fallbackRoot, context, ids, metadata);
+  },
+  transformSelection(root, context) {
+    return makeAdaptedContent(buildArxivSelectionRoot(root), context, {
+      site: "arxiv"
+    });
   }
 };

@@ -216,6 +216,15 @@ function buildGithubRoot(root: HTMLElement): HTMLElement | null {
   return article;
 }
 
+function buildGithubSelectionRoot(root: HTMLElement): HTMLElement {
+  const article = document.createElement("article");
+  const clone = root.cloneNode(true) as HTMLElement;
+  cleanupGithubRichText(clone);
+  normalizeGithubAssets(clone);
+  article.appendChild(clone);
+  return article;
+}
+
 export const githubAdapter: DomainAdapter = {
   name: "github",
   match(root, context) {
@@ -233,6 +242,12 @@ export const githubAdapter: DomainAdapter = {
         getText(adaptedRoot.querySelector("h1")) ||
         getText(root.querySelector("nav[aria-label='Breadcrumbs'] li:last-child span")) ||
         context.documentTitle,
+      author: getGithubAuthor(context.sourceUrl) || context.author
+    });
+  },
+  transformSelection(root, context) {
+    return makeAdaptedContent(buildGithubSelectionRoot(root), context, {
+      site: "github",
       author: getGithubAuthor(context.sourceUrl) || context.author
     });
   }

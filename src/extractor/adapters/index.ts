@@ -21,3 +21,22 @@ export async function adaptPage(root: HTMLElement, context: ExtractionContext): 
 
   return adaptGeneric(root, context);
 }
+
+export function adaptSelection(root: HTMLElement, context: ExtractionContext): AdaptedContent {
+  for (const adapter of DOMAIN_ADAPTERS) {
+    if (!adapter.transformSelection) {
+      continue;
+    }
+
+    if (adapter.name !== context.site && !adapter.match(root, context)) {
+      continue;
+    }
+
+    const adapted = adapter.transformSelection(root, context);
+    if (adapted) {
+      return adapted;
+    }
+  }
+
+  return adaptGeneric(root, context);
+}
