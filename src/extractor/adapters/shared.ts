@@ -2,6 +2,8 @@ import type { AdaptedContent, ExtractionContext } from "./types";
 
 const ZERO_WIDTH_PATTERN = /[\u200B-\u200D\uFEFF]/g;
 
+export type ChatProvider = "chatgpt" | "gemini" | "deepseek";
+
 function stripDescriptor(value: string, label: string): string {
   return value.replace(new RegExp(`^${label}\\s*:?\\s*`, "i"), "").trim();
 }
@@ -147,6 +149,10 @@ export function detectSite(document: Document): string {
     "";
   const probe = `${host} ${canonical}`.toLowerCase();
 
+  if (detectChatProvider(document)) {
+    return "chat";
+  }
+
   if (probe.includes("github.com")) {
     return "github";
   }
@@ -165,6 +171,45 @@ export function detectSite(document: Document): string {
   return host || "page";
 }
 
+export function detectChatProvider(document: Document): ChatProvider | undefined {
+  const host = document.location.hostname.toLowerCase();
+  const title = cleanText(document.title)?.toLowerCase() || "";
+  const siteName = cleanText(document.querySelector("meta[property='og:site_name']")?.getAttribute("content"))?.toLowerCase() || "";
+  const ogTitle = cleanText(document.querySelector("meta[property='og:title']")?.getAttribute("content"))?.toLowerCase() || "";
+  const probe = `${host} ${title} ${siteName} ${ogTitle}`;
+
+  if (
+    host.includes("chatgpt.com") ||
+    siteName.includes("chatgpt") ||
+    rootHasSelector(document, "[data-message-author-role]")
+  ) {
+    return "chatgpt";
+  }
+
+  if (
+    host.includes("gemini.google.com") ||
+    siteName.includes("gemini") ||
+    rootHasSelector(document, "user-query, model-response, chat-window")
+  ) {
+    return "gemini";
+  }
+
+  if (
+    host.includes("chat.deepseek.com") ||
+    siteName.includes("deepseek") ||
+    ogTitle.includes("deepseek") ||
+    rootHasSelector(document, ".ds-message, .ds-markdown")
+  ) {
+    return "deepseek";
+  }
+
+  return undefined;
+}
+
+function rootHasSelector(root: ParentNode, selector: string): boolean {
+  return Boolean(root.querySelector(selector));
+}
+
 export function getSourceUrl(document: Document): string {
   const candidate =
     document.querySelector<HTMLMetaElement>("meta[property='og:url']")?.content ||
@@ -176,6 +221,27 @@ export function getSourceUrl(document: Document): string {
 
 export function getDocumentTitle(document: Document): string {
   const site = detectSite(document);
+
+  if (site === "chat") {
+    const provider = detectChatProvider(document);
+
+    if (provider === "gemini") {
+      return (
+        getText(document.querySelector("[data-test-id='conversation-title']")) ||
+        cleanText(document.title.replace(/\s*-\s*Google Gemini$/i, "")) ||
+        document.title ||
+        "Gemini Chat"
+      );
+    }
+
+    if (provider === "deepseek") {
+      return cleanText(document.title.replace(/\s*-\s*DeepSeek$/i, "")) || document.title || "DeepSeek Chat";
+    }
+
+    if (provider === "chatgpt") {
+      return cleanText(document.title) || "ChatGPT Chat";
+    }
+  }
 
   if (site === "arxiv") {
     const title =

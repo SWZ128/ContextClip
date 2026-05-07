@@ -69,6 +69,32 @@ function cleanupWeixinMarkdown(markdown: string): string {
   return (index === -1 ? lines : lines.slice(0, index)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+function cleanupStandaloneCodeLabels(markdown: string): string {
+  const lines = markdown.split("\n");
+
+  for (let index = 0; index < lines.length - 2; index += 1) {
+    const label = lines[index].trim().toLowerCase();
+    const fence = lines[index + 2].trim().toLowerCase();
+
+    if (!/^(bash|shell|sh|sql|json|python|javascript|typescript|html|css|xml|yaml|toml)$/.test(label)) {
+      continue;
+    }
+
+    if (lines[index + 1].trim() !== "") {
+      continue;
+    }
+
+    if (fence !== `\`\`\`${label === "shell" || label === "sh" ? "bash" : label}`) {
+      continue;
+    }
+
+    lines[index] = "";
+    lines[index + 1] = "";
+  }
+
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 export function cleanupMarkdown(site: string, markdown: string): string {
   if (site === "arxiv") {
     return cleanupArxivMarkdown(markdown);
@@ -80,6 +106,14 @@ export function cleanupMarkdown(site: string, markdown: string): string {
 
   if (site === "weixin") {
     return cleanupWeixinMarkdown(markdown);
+  }
+
+  if (site === "gemini") {
+    return cleanupStandaloneCodeLabels(markdown);
+  }
+
+  if (site === "deepseek") {
+    return cleanupStandaloneCodeLabels(markdown);
   }
 
   return markdown;

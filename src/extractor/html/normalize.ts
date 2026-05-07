@@ -259,13 +259,16 @@ function detectCodeLanguage(node: HTMLElement): string | undefined {
     code?.className.match(/language-([a-z0-9_+-]+)/i)?.[1] ||
     node.getAttribute("lang") ||
     code?.getAttribute("lang");
+  const chatHeader = Array.from(node.querySelectorAll<HTMLElement>("div, span"))
+    .map((element) => collapseWhitespace(element.textContent ?? "").trim())
+    .find((value) => /^(bash|shell|sh|sql|json|python|javascript|typescript|html|css|xml|yaml|toml)$/i.test(value));
   const highlightClass =
     node.closest<HTMLElement>("[class*='highlight-source-']")?.className.match(/highlight-source-([a-z0-9_+-]+)/i)?.[1] ||
     node.closest<HTMLElement>("[class*='highlight-text-']")?.className.match(/highlight-text-([a-z0-9_+-]+)/i)?.[1] ||
     node.parentElement?.className.match(/highlight-source-([a-z0-9_+-]+)/i)?.[1] ||
     node.parentElement?.className.match(/highlight-text-([a-z0-9_+-]+)/i)?.[1] ||
     node.className.match(/highlight-source-([a-z0-9_+-]+)/i)?.[1];
-  const language = (direct || highlightClass || "").toLowerCase();
+  const language = (direct || highlightClass || chatHeader || "").toLowerCase();
 
   if (!language) {
     return undefined;
@@ -283,6 +286,51 @@ function detectCodeLanguage(node: HTMLElement): string | undefined {
     return "cpp";
   }
   return language;
+}
+
+function extractCodeText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? "";
+  }
+
+  if (!(node instanceof HTMLElement)) {
+    return "";
+  }
+
+  if (node.tagName.toLowerCase() === "br") {
+    return "\n";
+  }
+
+  return Array.from(node.childNodes).map((child) => extractCodeText(child)).join("");
+}
+
+function inferCodeLanguage(code: string): string | undefined {
+  const trimmed = code.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (/^\s*[\[{]/.test(trimmed)) {
+    return "json";
+  }
+
+  if (
+    /\bselect\b[\s\S]*\bfrom\b/i.test(trimmed) ||
+    /\bgroup by\b/i.test(trimmed) ||
+    /\border by\b/i.test(trimmed)
+  ) {
+    return "sql";
+  }
+
+  if (/^\s*(sudo\s+)?(sysctl|ip|cat|grep|last|echo)\b/m.test(trimmed) || /\|\s*grep\b/.test(trimmed)) {
+    return "bash";
+  }
+
+  if (/^\s*import\s+\w+/m.test(trimmed) || /^\s*def\s+\w+\(/m.test(trimmed) || /^\s*print\(/m.test(trimmed)) {
+    return "python";
+  }
+
+  return undefined;
 }
 
 function normalizeBlockNode(node: Node, options: NormalizeOptions): BlockNode[] {
@@ -314,8 +362,8 @@ function normalizeBlockNode(node: Node, options: NormalizeOptions): BlockNode[] 
     }
     case "pre": {
       const code = node.querySelector("code");
-      const language = detectCodeLanguage(node);
-      const raw = (code?.textContent ?? node.textContent ?? "").trimEnd();
+      const raw = extractCodeText(code ?? node).replace(/\n{3,}/g, "\n\n").trimEnd();
+      const language = detectCodeLanguage(node) || inferCodeLanguage(raw);
       return raw ? [{ type: "code", language: language || undefined, code: raw }] : [];
     }
     case "ul":

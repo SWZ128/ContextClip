@@ -1,11 +1,12 @@
 import { arxivAdapter } from "./arxiv";
+import { chatAdapter } from "./chat";
 import { adaptGeneric } from "./generic";
 import { githubAdapter } from "./github";
 import { weixinAdapter } from "./weixin";
 import { zhihuAdapter } from "./zhihu";
 import type { AdaptedContent, DomainAdapter, ExtractionContext } from "./types";
 
-const DOMAIN_ADAPTERS: DomainAdapter[] = [arxivAdapter, githubAdapter, weixinAdapter, zhihuAdapter];
+const DOMAIN_ADAPTERS: DomainAdapter[] = [chatAdapter, arxivAdapter, githubAdapter, weixinAdapter, zhihuAdapter];
 
 export async function adaptPage(root: HTMLElement, context: ExtractionContext): Promise<AdaptedContent> {
   for (const adapter of DOMAIN_ADAPTERS) {

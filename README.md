@@ -6,7 +6,7 @@ Not just another web-to-Markdown converter.
 ContextClip is a precision tool for feeding local LLMs.
 
 Text-only LLMs need clean context, not whole pages.
-You want three paragraphs from a GitHub README, one section from a paper, or a selected block from a private page, without nav, ads, comments, or layout junk.
+You want three paragraphs from a GitHub README, one section from a paper, one clean chat transcript, or a selected block from a private page, without nav, ads, comments, or layout junk.
 
 Everything runs entirely in your browser.
 No server. No API key. No page data leaving your machine.
@@ -36,11 +36,26 @@ Picked content also goes through site-specific cleanup when available.
 
 Every result includes YAML frontmatter: title, source URL, site, author, captured time, and extraction mode.
 
+Chat pages are exported as structured turns:
+
+```markdown
+# Conversation Title
+
+## user
+
+Question here...
+
+## chatgpt
+
+Answer here...
+```
+
 ## Site Support
 
 General extraction works on any page via Readability. Deeper cleanup for:
 
 - **arXiv** — full paper via HTML endpoint, metadata via API, abs-page fallback, page + picked fragments
+- **Chat web** — ChatGPT, Gemini, DeepSeek conversation transcript export, code fence cleanup, user/assistant turn structure
 - **GitHub** — README, rendered docs, single file views, page + picked fragments
 - **微信公众号** — article body, author, title, page + picked fragments
 - **知乎** — column posts, answers, page + picked fragments
