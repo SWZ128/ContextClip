@@ -1,6 +1,6 @@
 # ContextClip
 
-Chrome extension. Clip precise web context into AI-ready Markdown.
+Browser extension (Chrome & Firefox). Clip precise web context into AI-ready Markdown.
 
 Not just another web-to-Markdown converter.
 ContextClip is a precision tool for feeding local LLMs.
@@ -64,10 +64,10 @@ Quality over coverage. Better to trust a few adapters than ship thirty weak ones
 
 ## Install
 
-### Chrome Web Store
+### Chrome Web Store / Firefox Add-ons
 
-Chrome Web Store listing will be added here.
-Use blow options for now.
+Store listings will be added here.
+Use **Load From Source** for now.
 
 ### Install From GitHub Release
 
@@ -83,13 +83,24 @@ Use blow options for now.
 
 ```bash
 pnpm install
+
+# Chrome / Edge
 pnpm build
+
+# Firefox
+pnpm build:firefox
 ```
 
+**Chrome / Edge:**
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
 4. Select `dist/`
+
+**Firefox:**
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on**
+3. Select any file in `dist/` (e.g. `manifest.json`)
 
 ## Usage
 
@@ -163,18 +174,20 @@ ContextClip sits between them.
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev          # Chrome / Edge (watch mode)
+pnpm dev:firefox  # Firefox (watch mode)
 ```
 
 ```bash
 pnpm test:golden
 pnpm test:golden:update
-pnpm bundle:ext
+pnpm bundle:ext          # Chrome package
+pnpm bundle:ext:firefox  # Firefox package
 ```
 
 Watches source and rebuilds `dist/`. After each rebuild:
 
-1. Open `chrome://extensions`
+1. Open `chrome://extensions` (Chrome) or `about:debugging` (Firefox)
 2. Find **ContextClip**
 3. Click reload
 4. Refresh target page if content script changed

@@ -6,18 +6,18 @@ function storageKey(tabId: number): string {
 }
 
 async function setLastResult(tabId: number, result: ExtractResult): Promise<void> {
-  await chrome.storage.session.set({
+  await chrome.storage.local.set({
     [storageKey(tabId)]: result
   });
 }
 
 async function getLastResult(tabId: number): Promise<ExtractResult | null> {
-  const stored = await chrome.storage.session.get(storageKey(tabId));
+  const stored = await chrome.storage.local.get(storageKey(tabId));
   return (stored[storageKey(tabId)] as ExtractResult | undefined) ?? null;
 }
 
 async function clearLastResult(tabId: number): Promise<void> {
-  await chrome.storage.session.remove(storageKey(tabId));
+  await chrome.storage.local.remove(storageKey(tabId));
 }
 
 async function ensureContentScript(tabId: number): Promise<void> {

@@ -29,10 +29,10 @@ ContextClip does **not**:
 ## Local processing and storage
 
 - Extraction happens locally on the user's device
-- The latest extraction result may be stored temporarily in `chrome.storage.session` so it is not lost if the extension service worker sleeps
+- The latest extraction result may be stored temporarily in `chrome.storage.local` so it is not lost if the extension service worker sleeps
 - Exported Markdown or ZIP files are saved only when the user chooses to download them
 
-`chrome.storage.session` is used only for temporary extension state and is not sent to the developer.
+`chrome.storage.local` is used only for temporary extension state and is not sent to the developer.
 
 ## Permissions use
 
@@ -59,7 +59,7 @@ Users control whether to:
 
 ## Policy scope
 
-This policy applies to the ContextClip Chrome extension.
+This policy applies to the ContextClip browser extension (Chrome & Firefox).
 
 ## Contact
 
