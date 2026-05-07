@@ -1,24 +1,6 @@
 import { getText, makeAdaptedContent } from "./shared";
 import type { DomainAdapter } from "./types";
 
-const WEIXIN_TAIL_MARKERS = [
-  /^END$/,
-  /^送你一个新闻盲盒$/,
-  /^快来打开看看吧$/,
-  /^综合自[:：]/,
-  /^编辑[:：]/,
-  /^转载请注明/,
-  /^编撰\s*[|｜:：]/,
-  /^审稿\s*[|｜:：]/,
-  /^初审\s*[|｜:：]/,
-  /^终审\s*[|｜:：]/
-];
-
-function cleanupWeixinTail(root: HTMLElement): void {
-  // Tail cleanup moved to markdown layer.
-  void root;
-}
-
 function removeLeadingMediaOnlyBlocks(root: HTMLElement): void {
   let current = root.firstElementChild as HTMLElement | null;
 
@@ -56,7 +38,6 @@ function buildWeixinRoot(root: HTMLElement): HTMLElement | null {
     element.remove();
   });
   removeLeadingMediaOnlyBlocks(body);
-  cleanupWeixinTail(body);
   article.appendChild(body);
   return article;
 }

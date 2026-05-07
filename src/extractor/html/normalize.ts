@@ -193,10 +193,6 @@ function normalizeInlineChildren(node: ParentNode, options: NormalizeOptions): I
   return mergeInlineText(nodes);
 }
 
-function elementText(node: Element): string {
-  return collapseWhitespace(node.textContent ?? "").trim();
-}
-
 function normalizeTable(element: HTMLTableElement, options: NormalizeOptions): BlockNode[] {
   const rows = Array.from(element.querySelectorAll("tr")).map((row) =>
     Array.from(row.children).map((cell) => normalizeInlineChildren(cell, options))

@@ -228,6 +228,7 @@ export function getDocumentTitle(document: Document): string {
 }
 
 export function getMetaAuthor(document: Document): string | undefined {
+  const site = detectSite(document);
   const citationAuthors = Array.from(document.querySelectorAll<HTMLMetaElement>("meta[name='citation_author']"))
     .map((element) => cleanText(element.content))
     .filter(Boolean);
@@ -235,7 +236,7 @@ export function getMetaAuthor(document: Document): string | undefined {
     return citationAuthors.join(", ");
   }
 
-  if (detectSite(document) === "weixin") {
+  if (site === "weixin") {
     return (
       getText(document.querySelector("#js_name")) ||
       getText(document.querySelector(".rich_media_meta_nickname")) ||
@@ -243,7 +244,7 @@ export function getMetaAuthor(document: Document): string | undefined {
     );
   }
 
-  if (detectSite(document) === "arxiv") {
+  if (site === "arxiv") {
     const authors =
       getText(document.querySelector(".authors")) ||
       getText(document.querySelector(".ltx_authors")) ||
