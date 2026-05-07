@@ -67,9 +67,19 @@ Quality over coverage. Better to trust a few adapters than ship thirty weak ones
 ### Chrome Web Store
 
 Chrome Web Store listing will be added here.
-Use **Load From Source** for now.
+Use blow options for now.
 
-### Load From Source
+### Install From GitHub Release
+
+1. Open the latest release on GitHub
+2. Download `contextclip-extension-xxx.zip`
+3. Unzip it to a local folder
+4. Open `chrome://extensions`
+5. Enable **Developer mode**
+6. Click **Load unpacked**
+7. Select the unzipped folder
+
+### build From Source
 
 ```bash
 pnpm install
