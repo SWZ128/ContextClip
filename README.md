@@ -67,7 +67,7 @@ Quality over coverage. Better to trust a few adapters than ship thirty weak ones
 ### Chrome Web Store / Firefox Add-ons
 
 Store listings will be added here.
-Use **Load From Source** for now.
+Use blow options for now.
 
 ### Install From GitHub Release
 
