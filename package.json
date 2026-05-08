@@ -6,8 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",
+    "dev:firefox": "BROWSER=firefox vite build --watch",
     "build": "vite build",
+    "build:firefox": "BROWSER=firefox vite build",
     "bundle:ext": "pnpm build && cd dist && zip -r ../contextclip-extension.zip .",
+    "bundle:ext:firefox": "pnpm build:firefox && cd dist && zip -r ../contextclip-firefox.zip .",
     "test:golden": "tsx scripts/golden-test.ts",
     "test:golden:update": "tsx scripts/golden-test.ts --update",
     "test:golden:accept": "tsx scripts/golden-test.ts --update --force"
