@@ -55,7 +55,7 @@ Answer here...
 General extraction works on any page via Readability. Deeper cleanup for:
 
 - **arXiv** — full paper via HTML endpoint, metadata via API, abs-page fallback, page + picked fragments
-- **Chat web** — ChatGPT, Gemini, DeepSeek conversation transcript export, code fence cleanup, user/assistant turn structure
+- **Chat web** — ChatGPT, Gemini, DeepSeek conversation transcript export, code fence cleanup, user/assistant turn structure(now we can easily save ours conversations)
 - **GitHub** — README, rendered docs, single file views, page + picked fragments
 - **微信公众号** — article body, author, title, page + picked fragments
 - **知乎** — column posts, answers, page + picked fragments
